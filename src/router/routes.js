@@ -1,18 +1,24 @@
 import * as VueRouter from 'vue-router'
 const test = () => import('../views/TestView.vue')
 const testTwo = () => import('../views/TestViewTwo.vue')
+const testingComp = () => import('../views/TestingComp.vue')
 
 const routes = [
         {
             path: '/',
-            name: 'test',
+            name: 'resume',
             component: test,
         },
         {
             path: '/two',
-            name: 'testTwo',
+            name: 'goose',
             component: testTwo,
-        }
+        },
+        {
+            path: '/test',
+            name: 'testComp',
+            component: testingComp,
+        },
     ]
 
 const router = VueRouter.createRouter({
