@@ -36,6 +36,7 @@ body {
     position: absolute;
     text-align: center;
     border-color: aqua;
+    line-height: 200px;
 }
 
 .cube1 > .cube-face--front {
@@ -70,29 +71,6 @@ body {
 .cube {
     transform-origin: 100px 100px -100px;
 }
-
-.cube2 {
-    perspective: 0px;
-    animation: anim2;
-    animation-duration: 20s;
-    animation-iteration-count: infinite;
-    transform-origin:center center 40px;
-    transform-style: preserve-3d;
-    animation-timing-function: linear;
-}
-.cube-face2 {
-    width: 50px;
-    height: 50px;
-    position: absolute;
-    line-height: 200px;
-    text-align: center;
-    border-color: aqua;
-}
-
-.cube {
-    transform-origin: 100px 100px -100px;
-}
-
 
 @keyframes anim {
     from {
