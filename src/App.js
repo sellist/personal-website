@@ -1,13 +1,16 @@
 import './App.css';
-import Cube from './components/Cube/Cube';
+import Home from "./views/Home"
+import Sand from './views/Sand'
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <Cube/>
-      </header>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/sand" element={<Sand />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 

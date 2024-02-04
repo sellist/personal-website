@@ -37,6 +37,7 @@ body {
     text-align: center;
     border-color: aqua;
     line-height: 200px;
+    rotate: 180deg;
 }
 
 .cube1 > .cube-face--front {
