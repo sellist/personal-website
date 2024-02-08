@@ -1,1 +1,1 @@
-web: npm run build && serve -g build
+web: npx vite preview --host 8080

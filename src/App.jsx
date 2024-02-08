@@ -1,4 +1,3 @@
-import './App.css';
 import Home from "./views/Home"
 import Sand from './views/Sand'
 import { BrowserRouter, Routes, Route } from "react-router-dom";
