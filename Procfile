@@ -1,1 +1,1 @@
-web: npm run dev --host 8080
+web: bin/start-nginx-solo
