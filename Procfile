@@ -1,1 +1,1 @@
-web: npx vite preview --host 8080
+web: npm run dev --host 8080
