@@ -1,9 +1,12 @@
 <script setup lang="ts">
-
+import ThreeDThing from "../components/ThreeDThing.vue";
 </script>
 
 <template>
-<h1>hello!</h1>
+<div>
+    <h1>hello!</h1>
+    <ThreeDThing />
+</div>
 </template>
 
 <style scoped>
