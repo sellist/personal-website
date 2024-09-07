@@ -32,10 +32,11 @@ nav button {
     cursor: pointer;
     font-size: 1rem;
     padding: 0.5rem 1rem;
+    transition: all 0.1s ease-in-out;
 }
 
 nav button:hover {
-    transition: all 0.1s ease-in-out;
+
     background-color: dodgerblue;
 }
 
