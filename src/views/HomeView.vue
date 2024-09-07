@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ThreeDThing from "../components/ThreeDThing.vue";
+import ThreeDThing from "../components/ThreeJSCube.vue";
 </script>
 
 <template>
