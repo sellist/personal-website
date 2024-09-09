@@ -1,13 +1,18 @@
 <script setup lang="ts">
 
-import NavBar from "./components/NavBar.vue";
 </script>
 
 <template>
-    <NavBar />
     <router-view />
 </template>
 
 <style scoped>
+body {
+    min-width: 300px;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #6c757d;
+}
 
 </style>

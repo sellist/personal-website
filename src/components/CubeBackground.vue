@@ -3,7 +3,7 @@
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer();
+    const renderer = new THREE.WebGLRenderer({alpha: true, antialias: true});
     renderer.setSize(window.innerWidth, window.innerHeight);
     // keep the canvas centered while keeping the aspect ratio
     renderer.domElement.style.display = "block";
@@ -14,8 +14,6 @@
     renderer.domElement.style.left = "0";
     renderer.domElement.style.zIndex = "-1";
     renderer.domElement.style.background = "transparent";
-    scene.background = null;
-    renderer.domElement.style.color = "white";
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
@@ -26,17 +24,8 @@
     cube.material.color.set(0xAAAAAA);
     cube.material.wireframe = false;
     cube.material.opacity = 1;
-    cube.material.transparent = false;
     cube.castShadow = true;
     scene.add(cube);
-
-    const plane = new THREE.Mesh(new THREE.PlaneGeometry(5, 5), new THREE.MeshStandardMaterial({ color: 0xAAAAAA }));
-    plane.rotation.x = -Math.PI / 2;
-    plane.position.y = -1;
-    plane.receiveShadow = true;
-    // cube casts shadow
-
-    scene.add(plane);
 
     const light = new THREE.DirectionalLight(0xFFFFFF, 0.75);
     light.shadow.mapSize.width = 2048;
@@ -61,10 +50,7 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
     }
 
-
     window.addEventListener("resize", onWindowResize);
-
-
 
     const animate = () => {
         requestAnimationFrame(animate);
@@ -91,7 +77,6 @@
         top: 0;
         left: 0;
         z-index: -1;
-        background: transparent;
         color: white;
     }
 </style>
