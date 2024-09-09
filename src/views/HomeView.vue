@@ -10,10 +10,10 @@ import IconLink from "../components/socialLinks/IconLink.vue";
     <CubeBackground />
     <div class="navbar">
         <IconLink link="https://github.com/sellist"
-                  icon="src/assets/github.svg"
+                  icon="/github.svg"
                   title="Github" />
         <IconLink link="https://www.linkedin.com/in/sellist/"
-                  icon="src/assets/linkedin.svg"
+                  icon="/linkedin.svg"
                   title="LinkedIn" />
 
     </div>
