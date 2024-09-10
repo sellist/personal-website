@@ -6,13 +6,23 @@
     <router-view />
 </template>
 
+<style>
+:root {
+    --primary-color: var(--background-color);
+    --cube-color: #AAAAAA;
+}
+</style>
+
+
 <style scoped>
+
 body {
     min-width: 300px;
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #6c757d;
+    background-color: var(--primary-color);
 }
 
 </style>
+
