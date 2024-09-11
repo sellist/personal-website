@@ -68,7 +68,7 @@ scene.add(light);
 const ambientLight = new THREE.AmbientLight(0xFFFFFF, 0.25);
 scene.add(ambientLight);
 
-camera.position.z = 0.5;
+camera.position.z = 1;
 
 window.addEventListener("resize", onWindowResize);
 

@@ -19,7 +19,7 @@ import IconLink from "./IconLink.vue";
                       icon="/mail.svg"
                       title="Email" />
         </div>
-        <h6>try mousing over the cubes!</h6>
+        <h6>try mousing over the shapes!</h6>
     </div>
 </template>
 
@@ -29,10 +29,11 @@ import IconLink from "./IconLink.vue";
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        height: 15rem;
-        width: 15rem;
+        height: 20rem;
+        width: 20rem;
         margin: auto;
-        background-color: var(--primary-color);
+        border-radius: 100%;
+        background-color: rgb(66, 66, 66);
     }
 
     h1 {
