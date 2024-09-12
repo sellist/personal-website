@@ -1,13 +1,8 @@
 <script setup lang="ts">
 import * as THREE from 'three';
+import {onMounted, onUnmounted} from 'vue';
 
-const spheres: Sphere[] = [];
-const scene = new THREE.Scene();
-const camera = createCamera();
-const renderer = createRenderer();
-const light = createLight();
 
-document.body.appendChild(renderer.domElement);
 
 interface Sphere {
     sphere: THREE.Mesh;
@@ -16,65 +11,45 @@ interface Sphere {
     z_animation_value: number;
 }
 
-const points = [];
-const numPoints = 100;
-const phi = Math.PI * (3 - Math.sqrt(5));
-for (let i = 0; i < numPoints; i++) {
-    const y = 1 - (i / (numPoints - 1)) * 2;
-    const radius = Math.sqrt(1 - y * y);
-    const theta = phi * i;
-    const x = Math.cos(theta) * radius;
-    const z = Math.sin(theta) * radius;
-    points.push({ x, y, z });
-}
 
-for (const point of points) {
+const spheres: Sphere[] = [];
+const scene = new THREE.Scene();
+const camera = createCamera();
+const renderer = createRenderer();
+const light = createLight();
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+document.body.appendChild(renderer.domElement);
+
+const points = generatePoints(100);
+points.forEach(point => {
     const sphere = createPositionSphere(point.x, point.y, point.z);
     scene.add(sphere);
-    const c: Sphere = {
-        sphere: sphere,
+    spheres.push({
+        sphere,
         x_animation_value: getRandomInRange(0.001, 0.006),
         y_animation_value: getRandomInRange(0.001, 0.006),
         z_animation_value: getRandomInRange(0.001, 0.006),
-    };
-    spheres.push(c);
-}
-
-// use raycast to detect mouse over sphere
-const raycaster = new THREE.Raycaster();
-const mouse = new THREE.Vector2();
-document.addEventListener("mousemove", (event) => {
-    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-    raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObjects(scene.children);
-    for (const intersect of intersects) {
-        const sphere = intersect.object as THREE.Mesh;
-        if (sphere.material instanceof THREE.MeshStandardMaterial) {
-            if (sphere.material.color.getHex() === 0xAAAAAA) {
-                addRandomFadingColorToSphere(sphere);
-            }
-        }
-    }
+    });
 });
 
-function addRandomFadingColorToSphere(sphere: THREE.Mesh) {
-    const color = new THREE.Color(Math.random(), Math.random(), Math.random());
-    sphere.material = new THREE.MeshStandardMaterial({color: color});
-}
-
+document.addEventListener('mousemove', onMouseMove);
 scene.add(light);
-
-const ambientLight = new THREE.AmbientLight(0xFFFFFF, 0.25);
-scene.add(ambientLight);
-
+scene.add(new THREE.AmbientLight(0xFFFFFF, 0.25));
 camera.position.z = 1;
 
-window.addEventListener("resize", onWindowResize);
+onMounted(() => {
+    window.addEventListener('resize', onWindowResize);
+});
+
+onUnmounted(() => {
+    window.removeEventListener('resize', onWindowResize);
+    document.removeEventListener('mousemove', onMouseMove);
+});
 
 
 function createCamera() {
-    // fov based on window size
     const fov = window.innerWidth < 600 ? 45 : 75;
     return new THREE.PerspectiveCamera(fov, window.innerWidth / window.innerHeight, 0.1, 1000);
 }
@@ -82,25 +57,26 @@ function createCamera() {
 function createRenderer() {
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.domElement.style.display = "block";
-    renderer.domElement.style.alignContent = "center";
-    renderer.domElement.style.position = "fixed";
-    renderer.domElement.style.top = "0";
-    renderer.domElement.style.left = "0";
-    renderer.domElement.style.zIndex = "-1";
-    renderer.domElement.style.background = "#242424";
+    Object.assign(renderer.domElement.style, {
+        display: 'block',
+        alignContent: 'center',
+        position: 'fixed',
+        top: '0',
+        left: '0',
+        zIndex: '-1',
+        background: '#242424',
+    });
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     return renderer;
 }
 
-function createPositionSphere(x: number,y: number,z:number) {
+function createPositionSphere(x: number, y: number, z: number) {
     const geometry = new THREE.SphereGeometry(0.05, 32, 32);
     const material = new THREE.MeshStandardMaterial({ color: 0xAAAAAA });
     const sphere = new THREE.Mesh(geometry, material);
     sphere.position.set(x, y, z);
     sphere.castShadow = true;
-    sphere.receiveShadow = false;
     return sphere;
 }
 
@@ -125,27 +101,52 @@ function onWindowResize() {
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
+function generatePoints(numPoints: number) {
+    const points = [];
+    const phi = Math.PI * (3 - Math.sqrt(5));
+    for (let i = 0; i < numPoints; i++) {
+        const y = 1 - (i / (numPoints - 1)) * 2;
+        const radius = Math.sqrt(1 - y * y);
+        const theta = phi * i;
+        points.push({ x: Math.cos(theta) * radius, y, z: Math.sin(theta) * radius });
+    }
+    return points;
+}
+
+function onMouseMove(event: MouseEvent) {
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    raycaster.setFromCamera(mouse, camera);
+    const intersects = raycaster.intersectObjects(scene.children);
+    intersects.forEach(intersect => {
+        const sphere = intersect.object as THREE.Mesh;
+        if (sphere.material instanceof THREE.MeshStandardMaterial && sphere.material.color.getHex() === 0xAAAAAA) {
+            addRandomFadingColorToSphere(sphere);
+        }
+    });
+}
+
+function addRandomFadingColorToSphere(sphere: THREE.Mesh) {
+    sphere.material = new THREE.MeshStandardMaterial({ color: new THREE.Color(Math.random(), Math.random(), Math.random()) });
+}
+
 function animate() {
     requestAnimationFrame(animate);
-    for (const sphere of spheres) {
+    spheres.forEach(sphere => {
         sphere.sphere.rotation.x += sphere.x_animation_value;
         sphere.sphere.rotation.y += sphere.y_animation_value;
         sphere.sphere.rotation.z += sphere.z_animation_value;
-    }
+    });
     rotateSphereMatrixAroundCamera();
     renderer.render(scene, camera);
 }
 
 function rotateSphereMatrixAroundCamera() {
-    const matrix = new THREE.Matrix4();
-    matrix.makeRotationY(0.003);
-    for (const sphere of spheres) {
-        sphere.sphere.applyMatrix4(matrix);
-    }
-
+    const matrix = new THREE.Matrix4().makeRotationY(0.003);
+    spheres.forEach(sphere => sphere.sphere.applyMatrix4(matrix));
 }
-animate();
 
+animate();
 </script>
 
 <template>

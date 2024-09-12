@@ -7,7 +7,6 @@ import IconLink from "./IconLink.vue";
     <div class="container">
         <h1>scott ellis</h1>
         <p>full stack developer</p>
-
         <div class="info">
             <IconLink link="https://github.com/sellist"
                       icon="/github.svg"

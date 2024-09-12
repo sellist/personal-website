@@ -8,7 +8,6 @@ const currentIndex = ref(0);
 
 const nextBackground = () => {
     currentIndex.value = (currentIndex.value + 1) % backgrounds.length;
-
 };
 
 const prevBackground = () => {
@@ -20,9 +19,8 @@ const prevBackground = () => {
     <div>
         <button type="button" @click="prevBackground"><</button>
         <button type="button" @click="nextBackground">></button>
-        <transition name="fade" mode="out-in">
-            <component class="background" :is="backgrounds[currentIndex]" :key="currentIndex"></component>
-        </transition>
+
+        <component :is="backgrounds[currentIndex]"  />
     </div>
 </template>
 
@@ -44,8 +42,14 @@ const prevBackground = () => {
         cursor: pointer;
     }
 
-    .background {
-        transition: all 0.5s ease-in-out;
+    .fade-in {
+        opacity: 1;
+        transition: opacity 0.5s;
+    }
+
+    .fade-out {
+        opacity: 0;
+        transition: opacity 0.5s;
     }
 
 </style>
