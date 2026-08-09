@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import * as THREE from 'three';
-import {onMounted, onUnmounted} from 'vue';
+import {onMounted, onUnmounted, ref} from 'vue';
 
 
 
@@ -21,6 +21,42 @@ const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
 document.body.appendChild(renderer.domElement);
+const fadeIn = ref(fadeInShapeOverNSeconds);
+const fadeOut = ref(fadeOutShapeOverNSeconds);
+defineExpose({
+    fadeIn,
+    fadeOut
+});
+
+function fadeInShapeOverNSeconds(n: number) {
+    for (const sphere of spheres) {
+        const material = sphere.sphere.material as THREE.MeshStandardMaterial;
+        material.transparent = true;
+        material.opacity = 0;
+        const opacityStep = 1 / (60 * n);
+        const interval = setInterval(() => {
+            material.opacity += opacityStep;
+            if (material.opacity >= 1) {
+                clearInterval(interval);
+            }
+        }, 1000 / 60);
+    }
+}
+
+function fadeOutShapeOverNSeconds(n: number) {
+    for (const sphere of spheres) {
+        const material = sphere.sphere.material as THREE.MeshStandardMaterial;
+        material.transparent = true;
+        material.opacity = 1;
+        const opacityStep = 1 / (60 * n);
+        const interval = setInterval(() => {
+            material.opacity -= opacityStep;
+            if (material.opacity <= 0) {
+                clearInterval(interval);
+            }
+        }, 1000 / 60);
+    }
+}
 
 const points = generatePoints(100);
 points.forEach(point => {
@@ -160,7 +196,6 @@ animate();
         position: fixed;
         top: 0;
         left: 0;
-        z-index: -1;
         background: #242424;
     }
 </style>

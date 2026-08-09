@@ -7,6 +7,41 @@ const camera = createCamera();
 const renderer = createRenderer();
 const light = createLight();
 
+defineExpose({
+    fadeOutShapeOverNSeconds,
+    fadeInShapeOverNSeconds
+});
+
+function fadeInShapeOverNSeconds(n: number) {
+    for (const cube of cubes) {
+        const material = cube.cube.material as THREE.MeshStandardMaterial;
+        material.transparent = true;
+        material.opacity = 0;
+        const opacityStep = 1 / (60 * n);
+        const interval = setInterval(() => {
+            material.opacity += opacityStep;
+            if (material.opacity >= 1) {
+                clearInterval(interval);
+            }
+        }, 1000 / 60);
+    }
+}
+
+function fadeOutShapeOverNSeconds(n: number) {
+    for (const cube of cubes) {
+        const material = cube.cube.material as THREE.MeshStandardMaterial;
+        material.transparent = true;
+        material.opacity = 1;
+        const opacityStep = 1 / (60 * n);
+        const interval = setInterval(() => {
+            material.opacity -= opacityStep;
+            if (material.opacity <= 0) {
+                clearInterval(interval);
+            }
+        }, 1000 / 60);
+    }
+}
+
 document.body.appendChild(renderer.domElement);
 
 interface Cube {
@@ -131,6 +166,7 @@ function animateCube(c: Cube) {
     c.cube.rotation.z += c.z_animation_value;
 }
 
+
 function animate() {
     requestAnimationFrame(animate);
     for (const cube of cubes) {
@@ -152,7 +188,6 @@ function animate() {
         position: fixed;
         top: 0;
         left: 0;
-        z-index: -1;
         background: #242424;
     }
 </style>

@@ -5,7 +5,6 @@ import BackgroundSelector from "../components/BackgroundSelector.vue";
 </script>
 
 <template>
-<!--    <CubeBackground />-->
     <InfoPlacard />
     <BackgroundSelector />
 </template>

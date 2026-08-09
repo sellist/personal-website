@@ -7,10 +7,14 @@ const backgrounds = [CubeBackground, SphereBackground];
 const currentIndex = ref(0);
 
 const nextBackground = () => {
+    const prev = currentIndex.value;
+    backgrounds[prev].value.fadeOut(1);
     currentIndex.value = (currentIndex.value + 1) % backgrounds.length;
 };
 
 const prevBackground = () => {
+    const prev = currentIndex.value;
+    backgrounds[prev].exposed.fadeOutShapeOverNSeconds(1);
     currentIndex.value = (currentIndex.value - 1 + backgrounds.length) % backgrounds.length;
 };
 </script>
@@ -19,8 +23,8 @@ const prevBackground = () => {
     <div>
         <button type="button" @click="prevBackground"><</button>
         <button type="button" @click="nextBackground">></button>
-
-        <component :is="backgrounds[currentIndex]"  />
+        <div class="background-cover"></div>
+        <component class="background" :is="backgrounds[currentIndex]"  />
     </div>
 </template>
 
@@ -39,17 +43,15 @@ const prevBackground = () => {
         padding: 0.5rem;
         font-size: 1rem;
         border-radius: 100%;
+        z-index: 2;
         cursor: pointer;
     }
 
-    .fade-in {
-        opacity: 1;
-        transition: opacity 0.5s;
-    }
-
-    .fade-out {
-        opacity: 0;
-        transition: opacity 0.5s;
+    .background {
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: -2;
     }
 
 </style>
