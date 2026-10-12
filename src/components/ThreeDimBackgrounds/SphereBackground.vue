@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import * as THREE from 'three';
-import {onMounted, onUnmounted, ref} from 'vue';
+import {onMounted, onUnmounted} from 'vue';
+import { shaderOptions, type ShaderOption } from './shaders';
+import { createAccentLights } from './effects/accentLights';
 
 
 
 interface Sphere {
     sphere: THREE.Mesh;
+    shaderOption: ShaderOption;
     x_animation_value: number;
     y_animation_value: number;
     z_animation_value: number;
@@ -19,24 +22,40 @@ const renderer = createRenderer();
 const light = createLight();
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
+const clock = new THREE.Clock();
+const accentLights = createAccentLights();
+let currentShaderOption: ShaderOption = shaderOptions[0];
 
 document.body.appendChild(renderer.domElement);
-const fadeIn = ref(fadeInShapeOverNSeconds);
-const fadeOut = ref(fadeOutShapeOverNSeconds);
 defineExpose({
-    fadeIn,
-    fadeOut
+    fadeOut: fadeOutShapeOverNSeconds,
+    fadeIn: fadeInShapeOverNSeconds,
+    setShader
 });
+
+function setShader(id: string) {
+    const option = shaderOptions.find(o => o.id === id) ?? shaderOptions[0];
+    currentShaderOption = option;
+    for (const s of spheres) {
+        const material = option.createMaterial(new THREE.Color(0xAAAAAA));
+        option.applyAccentLights?.(material, accentLights.accentLights);
+        s.sphere.material = material;
+        s.sphere.userData.shaderOption = option;
+        s.shaderOption = option;
+    }
+}
 
 function fadeInShapeOverNSeconds(n: number) {
     for (const sphere of spheres) {
-        const material = sphere.sphere.material as THREE.MeshStandardMaterial;
-        material.transparent = true;
-        material.opacity = 0;
+        const option = sphere.shaderOption;
+        const material = sphere.sphere.material as THREE.Material;
+        let opacity = 0;
+        option.setOpacity(material, opacity);
         const opacityStep = 1 / (60 * n);
         const interval = setInterval(() => {
-            material.opacity += opacityStep;
-            if (material.opacity >= 1) {
+            opacity = Math.min(1, opacity + opacityStep);
+            option.setOpacity(material, opacity);
+            if (opacity >= 1) {
                 clearInterval(interval);
             }
         }, 1000 / 60);
@@ -45,13 +64,15 @@ function fadeInShapeOverNSeconds(n: number) {
 
 function fadeOutShapeOverNSeconds(n: number) {
     for (const sphere of spheres) {
-        const material = sphere.sphere.material as THREE.MeshStandardMaterial;
-        material.transparent = true;
-        material.opacity = 1;
+        const option = sphere.shaderOption;
+        const material = sphere.sphere.material as THREE.Material;
+        let opacity = 1;
+        option.setOpacity(material, opacity);
         const opacityStep = 1 / (60 * n);
         const interval = setInterval(() => {
-            material.opacity -= opacityStep;
-            if (material.opacity <= 0) {
+            opacity = Math.max(0, opacity - opacityStep);
+            option.setOpacity(material, opacity);
+            if (opacity <= 0) {
                 clearInterval(interval);
             }
         }, 1000 / 60);
@@ -64,6 +85,7 @@ points.forEach(point => {
     scene.add(sphere);
     spheres.push({
         sphere,
+        shaderOption: currentShaderOption,
         x_animation_value: getRandomInRange(0.001, 0.006),
         y_animation_value: getRandomInRange(0.001, 0.006),
         z_animation_value: getRandomInRange(0.001, 0.006),
@@ -73,6 +95,7 @@ points.forEach(point => {
 document.addEventListener('mousemove', onMouseMove);
 scene.add(light);
 scene.add(new THREE.AmbientLight(0xFFFFFF, 0.25));
+accentLights.pointLights.forEach(pointLight => scene.add(pointLight));
 camera.position.z = 1;
 
 onMounted(() => {
@@ -109,8 +132,10 @@ function createRenderer() {
 
 function createPositionSphere(x: number, y: number, z: number) {
     const geometry = new THREE.SphereGeometry(0.05, 32, 32);
-    const material = new THREE.MeshStandardMaterial({ color: 0xAAAAAA });
+    const material = currentShaderOption.createMaterial(new THREE.Color(0xAAAAAA));
+    currentShaderOption.applyAccentLights?.(material, accentLights.accentLights);
     const sphere = new THREE.Mesh(geometry, material);
+    sphere.userData.shaderOption = currentShaderOption;
     sphere.position.set(x, y, z);
     sphere.castShadow = true;
     return sphere;
@@ -154,24 +179,28 @@ function onMouseMove(event: MouseEvent) {
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
     raycaster.setFromCamera(mouse, camera);
     const intersects = raycaster.intersectObjects(scene.children);
+    const now = clock.getElapsedTime();
     intersects.forEach(intersect => {
-        const sphere = intersect.object as THREE.Mesh;
-        if (sphere.material instanceof THREE.MeshStandardMaterial && sphere.material.color.getHex() === 0xAAAAAA) {
-            addRandomFadingColorToSphere(sphere);
+        const mesh = intersect.object as THREE.Mesh;
+        const option = mesh.userData.shaderOption as ShaderOption | undefined;
+        if (!option) return;
+        const lastTriggered = (mesh.userData.lastHighlightTime as number | undefined) ?? -Infinity;
+        if (now - lastTriggered > 0.5) {
+            option.triggerHighlight(mesh.material as THREE.Material);
+            mesh.userData.lastHighlightTime = now;
         }
     });
 }
 
-function addRandomFadingColorToSphere(sphere: THREE.Mesh) {
-    sphere.material = new THREE.MeshStandardMaterial({ color: new THREE.Color(Math.random(), Math.random(), Math.random()) });
-}
-
 function animate() {
     requestAnimationFrame(animate);
+    const elapsed = clock.getElapsedTime();
+    accentLights.update(elapsed);
     spheres.forEach(sphere => {
         sphere.sphere.rotation.x += sphere.x_animation_value;
         sphere.sphere.rotation.y += sphere.y_animation_value;
         sphere.sphere.rotation.z += sphere.z_animation_value;
+        sphere.shaderOption.update(sphere.sphere.material as THREE.Material, elapsed);
     });
     rotateSphereMatrixAroundCamera();
     renderer.render(scene, camera);

@@ -1,26 +1,46 @@
 <script setup lang="ts">
 import * as THREE from 'three';
+import { shaderOptions, type ShaderOption } from './shaders';
+import { createAccentLights } from './effects/accentLights';
 
 const cubes: Cube[] = [];
 const scene = new THREE.Scene();
 const camera = createCamera();
 const renderer = createRenderer();
 const light = createLight();
+const clock = new THREE.Clock();
+const accentLights = createAccentLights();
+let currentShaderOption: ShaderOption = shaderOptions[0];
 
 defineExpose({
-    fadeOutShapeOverNSeconds,
-    fadeInShapeOverNSeconds
+    fadeOut: fadeOutShapeOverNSeconds,
+    fadeIn: fadeInShapeOverNSeconds,
+    setShader
 });
+
+function setShader(id: string) {
+    const option = shaderOptions.find(o => o.id === id) ?? shaderOptions[0];
+    currentShaderOption = option;
+    for (const c of cubes) {
+        const material = option.createMaterial(new THREE.Color(0xAAAAAA));
+        option.applyAccentLights?.(material, accentLights.accentLights);
+        c.cube.material = material;
+        c.cube.userData.shaderOption = option;
+        c.shaderOption = option;
+    }
+}
 
 function fadeInShapeOverNSeconds(n: number) {
     for (const cube of cubes) {
-        const material = cube.cube.material as THREE.MeshStandardMaterial;
-        material.transparent = true;
-        material.opacity = 0;
+        const option = cube.shaderOption;
+        const material = cube.cube.material as THREE.Material;
+        let opacity = 0;
+        option.setOpacity(material, opacity);
         const opacityStep = 1 / (60 * n);
         const interval = setInterval(() => {
-            material.opacity += opacityStep;
-            if (material.opacity >= 1) {
+            opacity = Math.min(1, opacity + opacityStep);
+            option.setOpacity(material, opacity);
+            if (opacity >= 1) {
                 clearInterval(interval);
             }
         }, 1000 / 60);
@@ -29,13 +49,15 @@ function fadeInShapeOverNSeconds(n: number) {
 
 function fadeOutShapeOverNSeconds(n: number) {
     for (const cube of cubes) {
-        const material = cube.cube.material as THREE.MeshStandardMaterial;
-        material.transparent = true;
-        material.opacity = 1;
+        const option = cube.shaderOption;
+        const material = cube.cube.material as THREE.Material;
+        let opacity = 1;
+        option.setOpacity(material, opacity);
         const opacityStep = 1 / (60 * n);
         const interval = setInterval(() => {
-            material.opacity -= opacityStep;
-            if (material.opacity <= 0) {
+            opacity = Math.max(0, opacity - opacityStep);
+            option.setOpacity(material, opacity);
+            if (opacity <= 0) {
                 clearInterval(interval);
             }
         }, 1000 / 60);
@@ -46,6 +68,7 @@ document.body.appendChild(renderer.domElement);
 
 interface Cube {
     cube: THREE.Mesh;
+    shaderOption: ShaderOption;
     x_animation_value: number;
     y_animation_value: number;
     z_animation_value: number;
@@ -68,6 +91,7 @@ for (const point of points) {
     scene.add(cube);
     const c: Cube = {
         cube: cube,
+        shaderOption: currentShaderOption,
         x_animation_value: getRandomInRange(0.001, 0.006),
         y_animation_value: getRandomInRange(0.001, 0.006),
         z_animation_value: getRandomInRange(0.001, 0.006),
@@ -83,25 +107,25 @@ document.addEventListener("mousemove", (event) => {
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
     raycaster.setFromCamera(mouse, camera);
     const intersects = raycaster.intersectObjects(scene.children);
+    const now = clock.getElapsedTime();
     for (const intersect of intersects) {
-        const cube = intersect.object as THREE.Mesh;
-        if (cube.material instanceof THREE.MeshStandardMaterial) {
-            if (cube.material.color.getHex() === 0xAAAAAA) {
-                addRandomFadingColorToCube(cube);
-            }
+        const mesh = intersect.object as THREE.Mesh;
+        const option = mesh.userData.shaderOption as ShaderOption | undefined;
+        if (!option) continue;
+        const lastTriggered = (mesh.userData.lastHighlightTime as number | undefined) ?? -Infinity;
+        if (now - lastTriggered > 0.5) {
+            option.triggerHighlight(mesh.material as THREE.Material);
+            mesh.userData.lastHighlightTime = now;
         }
     }
 });
-
-function addRandomFadingColorToCube(cube: THREE.Mesh) {
-    const color = new THREE.Color(Math.random(), Math.random(), Math.random());
-    cube.material = new THREE.MeshStandardMaterial({color: color});
-}
 
 scene.add(light);
 
 const ambientLight = new THREE.AmbientLight(0xFFFFFF, 0.25);
 scene.add(ambientLight);
+
+accentLights.pointLights.forEach(pointLight => scene.add(pointLight));
 
 camera.position.z = 1;
 
@@ -130,8 +154,10 @@ function createRenderer() {
 
 function createPositionCube(x: number,y: number,z:number) {
     const geometry = new THREE.BoxGeometry();
-    const material = new THREE.MeshStandardMaterial({ color: 0xAAAAAA });
+    const material = currentShaderOption.createMaterial(new THREE.Color(0xAAAAAA));
+    currentShaderOption.applyAccentLights?.(material, accentLights.accentLights);
     const cube = new THREE.Mesh(geometry, material);
+    cube.userData.shaderOption = currentShaderOption;
     cube.rotation.x = Math.random() * 2 * Math.PI;
     cube.geometry.scale(0.1, 0.1, 0.1);
     cube.position.set(x,y,z);
@@ -169,8 +195,11 @@ function animateCube(c: Cube) {
 
 function animate() {
     requestAnimationFrame(animate);
+    const elapsed = clock.getElapsedTime();
+    accentLights.update(elapsed);
     for (const cube of cubes) {
         animateCube(cube);
+        cube.shaderOption.update(cube.cube.material as THREE.Material, elapsed);
     }
     renderer.render(scene, camera);
 }
